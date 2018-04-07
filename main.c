@@ -90,11 +90,94 @@ Uint32 getpixel(SDL_Surface *surface, int x, int y)
     }
 }
 
-int main(int argc, char* argv[]) {
-    TTF_Font      *font;
+
+static int BYTE_PRINTS = 0;
+void print_byte(uint8_t data) {
+    printf("0x%02X, ", data);
+    BYTE_PRINTS++;
+    if(BYTE_PRINTS > 8) {
+        BYTE_PRINTS = 0;
+        printf("\\ \n");
+    }
+}
+
+void char_size(TTF_Font* font, int *w, int *h) {
     SDL_Surface   *font_surface;
+    SDL_Color bg = {0, 0, 0};
+    SDL_Color fg = {255, 255, 255};
+    font_surface = TTF_RenderText_Shaded(font, "0", fg, bg);
+    *w = font_surface->w;
+    *h = font_surface->h;
+}
+
+void print_char(char symbol, TTF_Font* font, uint8_t threshold, SDL_Color* fg, SDL_Color* bg) {
+    SDL_Surface   *font_surface;
+
+    char str[] = {0, '\0'};
+
+    uint8_t  data      = 0x00;
+    int pixelsRow      = 0;
+    int prints         = 0;
+
+    str[0] = symbol;
+    font_surface = TTF_RenderText_Shaded(font, str, *fg, *bg);
+    SDL_LockSurface(font_surface);
+
+    for(int i = 0; i < font_surface->h; i++) {
+
+        for(int j = 0; j < font_surface->w; j++) {
+            if(pixelsRow == 8) {
+                print_byte(data);
+                data = 0x00;
+                pixelsRow = 0;
+            }
+
+            if(getpixel(font_surface, j, i) > threshold) {
+                data |= (0x01) << (7 - (j % 8));
+
+            }
+
+            pixelsRow++;
+        }
+
+        if(pixelsRow > 0) {
+            print_byte(data);
+            data = 0x00;
+            pixelsRow = 0;
+        }
+
+    }
+
+    SDL_UnlockSurface(font_surface);
+    SDL_FreeSurface(font_surface);
+}
+
+void print_char_array(char characters[], TTF_Font *font, uint8_t threshold, SDL_Color* fg, SDL_Color* bg) {
+    int len = strlen(characters);
+    int font_w, font_h;
+
+    if(!len) return;
+
+    char_size(font, &font_w, &font_h);
+    printf("#define  SYSFONT_WIDTH   %d \n", font_w);
+    printf("#define  SYSFONT_HEIGHT  %d \n", font_h);
+    printf("#define  LINE_SPACING    %d \n", 8);
+    printf("#define SYSFONT_FIRSTCHAR       ((uint8_t)'%c') \n", characters[0]);
+    printf("#define SYSFONT_LASTCHAR       ((uint8_t)'%c') \n", characters[len-1]);
+    printf("#define SYSFONT_DEFINE_GLYPHS \\ \n");
+    printf("static PROGMEM_DECLARE(uint8_t, sysfont_glyphs[]) = { \\ \n");
+    for(int i = 0; i < len; i++) {
+        print_char(characters[i], font, threshold, fg, bg);
+        printf("/* %c */ \\ \n", characters[i]);
+        BYTE_PRINTS = 0;
+    }
+    printf("};");
+}
+
+int main(int argc, char* argv[]) {
     SDL_Color     fg = {255, 255, 255};
     SDL_Color     bg = {0, 0, 0};
+    TTF_Font*     font;
 
     if(SDL_Init(SDL_INIT_VIDEO)) {
         printf("Erro ao inicializar SDL");
@@ -120,53 +203,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    //test_render(10, 16, fontd); // Habilite para ver como a biblioteca da Atmel renderiza o caractere.
-
-    // Render
-    font_surface = TTF_RenderText_Shaded(font, argv[3], fg, bg);
-
-    // Write BMP
-    SDL_LockSurface(font_surface);
-    // write c and h files
-
-    printf("font size: %d x %d\n", font_surface->w, font_surface->h);
-    uint8_t  data      = 0x00;
-    uint32_t threshold = 10;
-    int pixelsRow = 0;
-    int prints = 0;
-
-    for(int i = 0; i < font_surface->h; i++) {
-
-        for(int j = 0; j < font_surface->w; j++) {
-            if(pixelsRow == 8) {
-                printf("0x%x, ", data);
-                data = 0x00;
-                pixelsRow = 0;
-                prints++;
-            }
-
-            if(getpixel(font_surface, j, i) > threshold) {
-                data |= (0x01) << (7 - (j % 8));
-
-            }
-
-            pixelsRow++;
-        }
-
-        if(pixelsRow > 0) {
-            printf("0x%x, ", data);
-            data = 0x00;
-            pixelsRow = 0;
-            prints++;
-        }
-
-    }
-
-    printf("\nsize: %d bytes", prints);
-    // Renderizar caractere por caractere
-
-
-    SDL_SaveBMP(font_surface, "teste.bmp");
-    SDL_UnlockSurface(font_surface);
+    //print_char('5', font, 10, &fg, &bg);
+    print_char_array(argv[3], font, 10, &fg, &bg);
     SDL_Quit();
 }
