@@ -1,0 +1,14 @@
+/Applications/CLion.app/Contents/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /Users/eduardomarossi/CLionProjects/fontimage_atmel_ssd1306
+-- The C compiler identification is AppleClang 9.1.0.9020039
+-- Check for working C compiler: /Library/Developer/CommandLineTools/usr/bin/cc
+-- Check for working C compiler: /Library/Developer/CommandLineTools/usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Found SDL2: /usr/local/lib/libSDL2main.a;/usr/local/lib/libSDL2.dylib;-framework Cocoa  
+-- Found SDL2_image: /usr/local/lib/libSDL2_image.dylib (found version "2.0.3") 
+-- Found SDL2_ttf: /usr/local/lib/libSDL2_ttf.dylib (found version "2.0.14") 
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /Users/eduardomarossi/CLionProjects/fontimage_atmel_ssd1306/cmake-build-debug
